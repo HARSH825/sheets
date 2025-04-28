@@ -9,12 +9,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Trash2 } from "lucide-react"
 
-interface StaffDetailsStepProps {
-  staffMembers: { id: number }[]
-  setStaffMembers: React.Dispatch<React.SetStateAction<{ id: number }[]>>
+export interface StaffMember {
+  id: number;
+  name?: string;
+  phoneNumber?: string;
+  specialist?: string;
+  photoLink?: string;
+  notes?: string;
 }
 
-export default function StaffDetailsStep({ staffMembers, setStaffMembers }: StaffDetailsStepProps) {
+interface StaffDetailsStepProps {
+  staffMembers: StaffMember[];
+  setStaffMembers: React.Dispatch<React.SetStateAction<StaffMember[]>>;
+  handleStaffChange: (id: number, field: string, value: string) => void;
+}
+
+export default function StaffDetailsStep({ 
+  staffMembers, 
+  setStaffMembers,
+  handleStaffChange
+}: StaffDetailsStepProps) {
   const addStaffMember = () => {
     const newId = staffMembers.length > 0 ? Math.max(...staffMembers.map((s) => s.id)) + 1 : 1
     setStaffMembers([...staffMembers, { id: newId }])
@@ -43,19 +57,32 @@ export default function StaffDetailsStep({ staffMembers, setStaffMembers }: Staf
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
             <div className="space-y-2">
               <Label htmlFor={`staffName-${staff.id}`}>Name</Label>
-              <Input id={`staffName-${staff.id}`} placeholder="" />
+              <Input 
+                id={`staffName-${staff.id}`} 
+                value={staff.name || ''}
+                onChange={(e) => handleStaffChange(staff.id, "name", e.target.value)}
+                placeholder="" 
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor={`staffPhone-${staff.id}`}>Phone Number</Label>
-              <Input id={`staffPhone-${staff.id}`} placeholder="" />
+              <Input 
+                id={`staffPhone-${staff.id}`} 
+                value={staff.phoneNumber || ''}
+                onChange={(e) => handleStaffChange(staff.id, "phoneNumber", e.target.value)}
+                placeholder="" 
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
             <div className="space-y-2">
               <Label htmlFor={`specialist-${staff.id}`}>Specialist</Label>
-              <Select>
+              <Select 
+                value={staff.specialist}
+                onValueChange={(value) => handleStaffChange(staff.id, "specialist", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select specialization" />
                 </SelectTrigger>
@@ -70,13 +97,24 @@ export default function StaffDetailsStep({ staffMembers, setStaffMembers }: Staf
 
             <div className="space-y-2">
               <Label htmlFor={`photoLink-${staff.id}`}>Photo Link</Label>
-              <Input id={`photoLink-${staff.id}`} placeholder="" />
+              <Input 
+                id={`photoLink-${staff.id}`} 
+                value={staff.photoLink || ''}
+                onChange={(e) => handleStaffChange(staff.id, "photoLink", e.target.value)}
+                placeholder="" 
+              />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor={`notes-${staff.id}`}>Notes</Label>
-            <Textarea id={`notes-${staff.id}`} placeholder="" className="min-h-[100px]" />
+            <Textarea 
+              id={`notes-${staff.id}`} 
+              value={staff.notes || ''}
+              onChange={(e) => handleStaffChange(staff.id, "notes", e.target.value)}
+              placeholder="" 
+              className="min-h-[100px]" 
+            />
           </div>
         </div>
       ))}

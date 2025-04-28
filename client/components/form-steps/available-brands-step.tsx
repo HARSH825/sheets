@@ -7,13 +7,22 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Trash2 } from "lucide-react"
 
-export interface AvailableBrandsStepProps {
-  fluids: { id: number }[]
-  setFluids: React.Dispatch<React.SetStateAction<{ id: number }[]>>
+export interface Fluid {
+  id: number;
+  fluidType?: string;
+  brandName?: string;
+  grade?: string;
+  ratePerLiter?: number;
+  usedFor?: string;
 }
 
+export interface AvailableBrandsStepProps {
+  fluids: Fluid[];
+  setFluids: React.Dispatch<React.SetStateAction<Fluid[]>>;
+  handleFluidChange: (id: number, field: string, value: string | number) => void;
+}
 
-export default function AvailableBrandsStep({ fluids, setFluids }: AvailableBrandsStepProps) {
+export default function AvailableBrandsStep({ fluids, setFluids, handleFluidChange }: AvailableBrandsStepProps) {
   const addFluid = () => {
     const newId = fluids.length > 0 ? Math.max(...fluids.map((f) => f.id)) + 1 : 1
     setFluids([...fluids, { id: newId }])
@@ -54,7 +63,10 @@ export default function AvailableBrandsStep({ fluids, setFluids }: AvailableBran
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
             <div className="space-y-2">
               <Label htmlFor={`fluidType-${fluid.id}`}>Fluid Type</Label>
-              <Select>
+              <Select 
+                value={fluid.fluidType}
+                onValueChange={(value) => handleFluidChange(fluid.id, "fluidType", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select Fluid Type" />
                 </SelectTrigger>
@@ -69,28 +81,59 @@ export default function AvailableBrandsStep({ fluids, setFluids }: AvailableBran
 
             <div className="space-y-2">
               <Label htmlFor={`brandName-${fluid.id}`}>Brand Name</Label>
-              <Input id={`brandName-${fluid.id}`} placeholder="e.g. Castrol, Shell" />
+              <Input 
+                id={`brandName-${fluid.id}`} 
+                value={fluid.brandName || ''}
+                onChange={(e) => handleFluidChange(fluid.id, "brandName", e.target.value)}
+                placeholder="e.g. Castrol, Shell" 
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
             <div className="space-y-2">
               <Label htmlFor={`grade-${fluid.id}`}>Grade (if applicable)</Label>
-              <Input id={`grade-${fluid.id}`} placeholder="e.g. 5W-30, 10W-40" />
+              <Input 
+                id={`grade-${fluid.id}`} 
+                value={fluid.grade || ''}
+                onChange={(e) => handleFluidChange(fluid.id, "grade", e.target.value)}
+                placeholder="e.g. 5W-30, 10W-40" 
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor={`rate-${fluid.id}`}>Rate/L</Label>
-              <Input id={`rate-${fluid.id}`} placeholder="Price per liter" />
+              <Input 
+                id={`rate-${fluid.id}`} 
+                type="number"
+                value={fluid.ratePerLiter || ''}
+                onChange={(e) => handleFluidChange(fluid.id, "ratePerLiter", parseFloat(e.target.value) || 0)}
+                placeholder="Price per liter" 
+              />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor={`usedFor-${fluid.id}`}>Used For (Vehicle Types)</Label>
-            <Input id={`usedFor-${fluid.id}`} placeholder="e.g. All Petrol Cars, Diesel SUVs" />
+            <Input 
+              id={`usedFor-${fluid.id}`} 
+              value={fluid.usedFor || ''}
+              onChange={(e) => handleFluidChange(fluid.id, "usedFor", e.target.value)}
+              placeholder="e.g. All Petrol Cars, Diesel SUVs" 
+            />
           </div>
         </div>
       ))}
+
+      {fluids.length === 0 && (
+        <Button
+          type="button"
+          onClick={addFluid}
+          className="w-full flex items-center justify-center brand-gradient text-white brand-shadow"
+        >
+          <Plus className="mr-2 h-4 w-4" /> Add Fluid
+        </Button>
+      )}
     </div>
   )
 }

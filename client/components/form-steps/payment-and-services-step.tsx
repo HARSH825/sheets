@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function PaymentAndServicesStep() {
-  const [checkedServices, setCheckedServices] = useState({})
+  const [checkedServices, setCheckedServices] = useState<{ [key: string]: boolean }>({})
 
   const handleServiceCheck = (id: string) => {
     setCheckedServices((prev) => ({

@@ -49,19 +49,28 @@ export default function PickAndDropStep({
         <>
           <div className="space-y-2">
             <Label htmlFor="pickDropType">Free or Paid</Label>
-            <Input 
-              id="pickDropType" 
+            <Select 
               value={formData.pickDropType}
-              onChange={handleInputChange}
-              placeholder="" 
-            />
+              onValueChange={(value) => handleSelectChange("pickDropType", value)}
+            >
+              <SelectTrigger id="pickDropType">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="pickDropCharges">Charges</Label>
-            <Select onValueChange={(value) => handleSelectChange("pickDropCharges", value)}>
+            <Select 
+              value={formData.pickDropCharges}
+              onValueChange={(value) => handleSelectChange("pickDropCharges", value)}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="" />
+                <SelectValue placeholder="Select charging type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="free">Free</SelectItem>
@@ -77,7 +86,7 @@ export default function PickAndDropStep({
               id="serviceArea" 
               value={formData.serviceArea}
               onChange={handleInputChange}
-              placeholder="" 
+              placeholder="Enter the areas you provide service to" 
               className="min-h-[100px]" 
             />
           </div>

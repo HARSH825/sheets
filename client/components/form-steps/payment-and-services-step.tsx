@@ -6,89 +6,207 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-export default function PaymentAndServicesStep() {
+interface PaymentAndServicesStepProps {
+  formData: {
+    upiId: string;
+    bankAccountNumber: string;
+    ifscCode: string;
+    billingFrequency: string;
+    preferredPaymentMode: string;
+    services: Array<{
+      serviceId: string;
+      serviceName: string;
+      isOffered: boolean;
+      hatchbackPrice: number;
+      sedanPrice: number;
+      suvPrice: number;
+      duration: number;
+    }>;
+    [key: string]: any;
+  };
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  handleSelectChange: (id: string, value: string) => void;
+  handleServiceChange: (serviceData: any) => void;
+}
+
+export default function PaymentAndServicesStep({ 
+  formData, 
+  handleInputChange, 
+  handleSelectChange,
+  handleServiceChange
+}: PaymentAndServicesStepProps) {
   const [checkedServices, setCheckedServices] = useState<{ [key: string]: boolean }>({})
 
   const handleServiceCheck = (id: string) => {
+    const newCheckedState = !checkedServices[id]
     setCheckedServices((prev) => ({
       ...prev,
-      [id]: !prev[id],
+      [id]: newCheckedState,
     }))
+
+    // If unchecking, remove service from services array
+    if (!newCheckedState) {
+      const updatedServices = formData.services.filter(service => service.serviceId !== id)
+      handleServiceChange(updatedServices)
+    } else {
+      // If checking, add default service object
+      const serviceName = id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+      const newService = {
+        serviceId: id,
+        serviceName,
+        isOffered: true,
+        hatchbackPrice: 0,
+        sedanPrice: 0,
+        suvPrice: 0,
+        duration: 0
+      }
+      handleServiceChange([...formData.services, newService])
+    }
   }
 
-  // Helper function to create service items with price fields
-  const ServiceItem = ({ id, label }: { id: string; label: string }) => (
-    <div className="border rounded-lg p-4 mb-4 transition-all duration-200 hover:shadow-md hover:border-primary">
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id={id}
-          checked={checkedServices[id] || false}
-          onCheckedChange={() => handleServiceCheck(id)}
-          className="h-5 w-5"
-        />
-        <Label htmlFor={id} className="font-medium">
-          {label}
-        </Label>
-      </div>
+  const updateServicePrice = (serviceId: string, field: string, value: number) => {
+    const updatedServices = formData.services.map(service => {
+      if (service.serviceId === serviceId) {
+        return { ...service, [field]: value }
+      }
+      return service
+    })
+    handleServiceChange(updatedServices)
+  }
 
-      {checkedServices[id] && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 pl-6 pt-3 border-t border-gray-100">
-          <div className="space-y-2">
-            <Label htmlFor={`${id}-hatchback`} className="text-sm text-gray-600">
-              Hatchback Price
-            </Label>
-            <Input
-              id={`${id}-hatchback`}
-              placeholder="Hatchback Price"
-              className="focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`${id}-sedan`} className="text-sm text-gray-600">
-              Sedan Price
-            </Label>
-            <Input id={`${id}-sedan`} placeholder="Sedan Price" className="focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`${id}-suv`} className="text-sm text-gray-600">
-              SUV Price
-            </Label>
-            <Input id={`${id}-suv`} placeholder="SUV Price" className="focus:ring-2 focus:ring-primary/20" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`${id}-duration`} className="text-sm text-gray-600">
-              Duration (minutes)
-            </Label>
-            <Input id={`${id}-duration`} placeholder="Duration" className="focus:ring-2 focus:ring-primary/20" />
-          </div>
+  // Initialize checked states from existing services
+  useState(() => {
+    const initialCheckedState: { [key: string]: boolean } = {}
+    formData.services.forEach(service => {
+      initialCheckedState[service.serviceId] = true
+    })
+    setCheckedServices(initialCheckedState)
+  })
+
+  // Helper function to create service items with price fields
+  const ServiceItem = ({ id, label }: { id: string; label: string }) => {
+    const service = formData.services.find(s => s.serviceId === id) || {
+      hatchbackPrice: 0,
+      sedanPrice: 0,
+      suvPrice: 0,
+      duration: 0
+    }
+
+    return (
+      <div className="border rounded-lg p-4 mb-4 transition-all duration-200 hover:shadow-md hover:border-primary">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id={id}
+            checked={checkedServices[id] || false}
+            onCheckedChange={() => handleServiceCheck(id)}
+            className="h-5 w-5"
+          />
+          <Label htmlFor={id} className="font-medium">
+            {label}
+          </Label>
         </div>
-      )}
-    </div>
-  )
+
+        {checkedServices[id] && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 pl-6 pt-3 border-t border-gray-100">
+            <div className="space-y-2">
+              <Label htmlFor={`${id}-hatchback`} className="text-sm text-gray-600">
+                Hatchback Price
+              </Label>
+              <Input
+                id={`${id}-hatchback`}
+                value={service.hatchbackPrice || ''}
+                onChange={(e) => updateServicePrice(id, 'hatchbackPrice', parseFloat(e.target.value) || 0)}
+                type="number"
+                placeholder="Hatchback Price"
+                className="focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`${id}-sedan`} className="text-sm text-gray-600">
+                Sedan Price
+              </Label>
+              <Input 
+                id={`${id}-sedan`} 
+                value={service.sedanPrice || ''}
+                onChange={(e) => updateServicePrice(id, 'sedanPrice', parseFloat(e.target.value) || 0)}
+                type="number"
+                placeholder="Sedan Price" 
+                className="focus:ring-2 focus:ring-primary/20" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`${id}-suv`} className="text-sm text-gray-600">
+                SUV Price
+              </Label>
+              <Input 
+                id={`${id}-suv`} 
+                value={service.suvPrice || ''}
+                onChange={(e) => updateServicePrice(id, 'suvPrice', parseFloat(e.target.value) || 0)}
+                type="number"
+                placeholder="SUV Price" 
+                className="focus:ring-2 focus:ring-primary/20" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`${id}-duration`} className="text-sm text-gray-600">
+                Duration (minutes)
+              </Label>
+              <Input 
+                id={`${id}-duration`} 
+                value={service.duration || ''}
+                onChange={(e) => updateServicePrice(id, 'duration', parseInt(e.target.value) || 0)}
+                type="number"
+                placeholder="Duration" 
+                className="focus:ring-2 focus:ring-primary/20" 
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="upiId">UPI ID</Label>
-          <Input id="upiId" placeholder="" />
+          <Input 
+            id="upiId" 
+            value={formData.upiId}
+            onChange={handleInputChange}
+            placeholder="" 
+          />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="bankAccountNumber">Bank Account Number</Label>
-          <Input id="bankAccountNumber" placeholder="" />
+          <Input 
+            id="bankAccountNumber" 
+            value={formData.bankAccountNumber}
+            onChange={handleInputChange}
+            placeholder="" 
+          />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="ifscCode">IFSC Code</Label>
-          <Input id="ifscCode" placeholder="" />
+          <Input 
+            id="ifscCode" 
+            value={formData.ifscCode}
+            onChange={handleInputChange}
+            placeholder="" 
+          />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="billingFrequency">Billing Frequency</Label>
-          <Select>
+          <Select 
+            value={formData.billingFrequency}
+            onValueChange={(value) => handleSelectChange("billingFrequency", value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select frequency" />
             </SelectTrigger>
@@ -103,7 +221,10 @@ export default function PaymentAndServicesStep() {
 
       <div className="space-y-2">
         <Label htmlFor="preferredPaymentMode">Preferred Mode of Payment</Label>
-        <Select>
+        <Select 
+          value={formData.preferredPaymentMode}
+          onValueChange={(value) => handleSelectChange("preferredPaymentMode", value)}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select payment mode" />
           </SelectTrigger>
@@ -159,7 +280,6 @@ export default function PaymentAndServicesStep() {
           </div>
         </div>
 
-        {/* Additional service categories */}
         <div className="space-y-4">
           <h4 className="font-semibold text-lg py-2 border-b border-gray-200 mb-4 text-primary">AC Services</h4>
           <div className="space-y-2">
@@ -175,9 +295,6 @@ export default function PaymentAndServicesStep() {
             <ServiceItem id="compressor-belt-replacement" label="Compressor Belt Replacement" />
           </div>
         </div>
-
-        {/* More service categories would be listed here */}
-        {/* For brevity, I've included just a few categories */}
       </div>
     </div>
   )

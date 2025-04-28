@@ -199,8 +199,11 @@ export default function GarageRegistrationForm() {
     }
   }
 
-  const handleSubmit = async (e?: FormEvent) => {
-    if (e) e.preventDefault()
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault() // Prevent default form submission behavior
+    
+    // Only proceed if we're on the last step and explicitly submitting
+    if (currentStep !== steps.length - 1) return
     
     setIsSubmitting(true)
     setErrorMessage("")
@@ -301,7 +304,7 @@ export default function GarageRegistrationForm() {
 
       {/* Form Content - Only show if not completed */}
       {!isCompleted && (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="form-container">
           <div className="flex items-center justify-center mb-6">
             <div className="w-20 h-20 mr-4">
               <Image src="/images/logo.png" alt="MechHelp Logo" width={80} height={80} className="object-contain" />
@@ -349,7 +352,7 @@ export default function GarageRegistrationForm() {
             ) : (
               <Button 
                 type="submit" 
-                disabled={isSubmitting}
+                disabled={isSubmitting} 
                 className="brand-gradient text-white brand-shadow flex items-center"
               >
                 {isSubmitting ? "Submitting..." : "Submit"}

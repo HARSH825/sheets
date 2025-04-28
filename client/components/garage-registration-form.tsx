@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils"
 // Import step components
 import GarageInfoStep from "./form-steps/garage-info-step"
 import AboutGarageStep from "./form-steps/about-garage-step"
-import AvailableBrandsStep from "./form-steps/available-brands-step"
-import StaffDetailsStep from "./form-steps/staff-details-step"
+import AvailableBrandsStep, { Fluid } from "./form-steps/available-brands-step"
+import StaffDetailsStep, { StaffMember } from "./form-steps/staff-details-step"
 import PickAndDropStep from "./form-steps/pick-and-drop-step"
 import PaymentAndServicesStep from "./form-steps/payment-and-services-step"
 
@@ -20,8 +20,8 @@ const API_BASE_URL = "http://localhost:5000/api"
 
 export default function GarageRegistrationForm() {
   const [currentStep, setCurrentStep] = useState(0)
-  const [fluids, setFluids] = useState([{ id: 1 }])
-  const [staffMembers, setStaffMembers] = useState([{ id: 1 }])
+  const [fluids, setFluids] = useState<Fluid[]>([{ id: 1 }])
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([{ id: 1 }])
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
   const [isCompleted, setIsCompleted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -69,7 +69,15 @@ export default function GarageRegistrationForm() {
     preferredPaymentMode: "",
     
     // Services (will be collected from PaymentAndServicesStep)
-    services: [] as any[]
+    services: [] as Array<{
+      serviceId: string;
+      serviceName: string;
+      isOffered: boolean;
+      hatchbackPrice: number;
+      sedanPrice: number;
+      suvPrice: number;
+      duration: number;
+    }>
   })
 
   // Handle input changes from any step
@@ -97,6 +105,36 @@ export default function GarageRegistrationForm() {
     })
   }
 
+  // Handle fluid changes
+  const handleFluidChange = (id: number, field: string, value: string | number) => {
+    const updatedFluids = fluids.map(fluid => {
+      if (fluid.id === id) {
+        return { ...fluid, [field]: value }
+      }
+      return fluid
+    })
+    setFluids(updatedFluids)
+  }
+
+  // Handle staff member changes
+  const handleStaffChange = (id: number, field: string, value: string) => {
+    const updatedStaff = staffMembers.map(staff => {
+      if (staff.id === id) {
+        return { ...staff, [field]: value }
+      }
+      return staff
+    })
+    setStaffMembers(updatedStaff)
+  }
+
+  // Handle service changes
+  const handleServiceChange = (updatedServices: any[]) => {
+    setFormData({
+      ...formData,
+      services: updatedServices
+    })
+  }
+
   const steps = [
     { 
       title: "Garage Info", 
@@ -118,6 +156,7 @@ export default function GarageRegistrationForm() {
       component: <AvailableBrandsStep 
         fluids={fluids} 
         setFluids={setFluids}
+        handleFluidChange={handleFluidChange}
       /> 
     },
     {
@@ -125,6 +164,7 @@ export default function GarageRegistrationForm() {
       component: <StaffDetailsStep 
         staffMembers={staffMembers} 
         setStaffMembers={setStaffMembers} 
+        handleStaffChange={handleStaffChange}
       />,
     },
     { 
@@ -142,6 +182,7 @@ export default function GarageRegistrationForm() {
         formData={formData}
         handleInputChange={handleInputChange}
         handleSelectChange={handleSelectChange}
+        handleServiceChange={handleServiceChange}
       /> 
     },
   ]
@@ -158,67 +199,6 @@ export default function GarageRegistrationForm() {
     }
   }
 
-  // Prepare fluids data for submission
-  const prepareFluidData = () => {
-    return fluids.map(fluid => ({
-      fluidType: (document.getElementById(`fluidType-${fluid.id}`) as HTMLSelectElement)?.value || "",
-      brandName: (document.getElementById(`brandName-${fluid.id}`) as HTMLInputElement)?.value || "",
-      grade: (document.getElementById(`grade-${fluid.id}`) as HTMLInputElement)?.value || "",
-      ratePerLiter: parseFloat((document.getElementById(`rate-${fluid.id}`) as HTMLInputElement)?.value || "0"),
-      usedFor: (document.getElementById(`usedFor-${fluid.id}`) as HTMLInputElement)?.value || ""
-    }))
-  }
-
-  // Prepare staff members data for submission
-  const prepareStaffData = () => {
-    return staffMembers.map(staff => ({
-      name: (document.getElementById(`staffName-${staff.id}`) as HTMLInputElement)?.value || "",
-      phoneNumber: (document.getElementById(`staffPhone-${staff.id}`) as HTMLInputElement)?.value || "",
-      specialist: (document.getElementById(`specialist-${staff.id}`) as HTMLSelectElement)?.value || "",
-      photoLink: (document.getElementById(`photoLink-${staff.id}`) as HTMLInputElement)?.value || "",
-      notes: (document.getElementById(`notes-${staff.id}`) as HTMLTextAreaElement)?.value || ""
-    }))
-  }
-
-  // Prepare services data for submission
-  const prepareServicesData = () => {
-    // This function would collect all checked services with their prices
-    // This is a simplification; you'd need to adapt this to match how your PaymentAndServicesStep component
-    // is tracking selected services and prices
-    const services = []
-    const serviceIds = [
-      "general-checkup", "engine-oil-change", "oil-filter-replacement", "air-filter-replacement", 
-      "ac-filter-replacement", "fuel-filter-replacement", "all-top-ups", "top-wash",
-      "washing-interior-vacuum", "throttle-body-cleaning", "spark-plug-cleaning", 
-      "spark-plug-replacement", "timing-belt-adjustment", "fuel-injector-cleaning",
-      "wiper-replacement", "wiper-motor-replacement", "water-pump-belt-replacement",
-      "brake-pad", "brake-shoes", "brake-disc", "caliper-pin", "disc-turning",
-      "hand-brake", "brake-drums", "wheel-cylinder", "headlight-adjustment",
-      "caliper-greasing", "front-brake-cleaning", "rear-brake-cleaning",
-      "condenser-cleaning", "ac-filter-cleaning", "cooling-coil-cleaning",
-      "cooling-coil-replacement", "condenser-replacement", "compressor-replacement",
-      "heating-coil-replacement", "v-belt-replacement", "ac-blower-replacement",
-      "compressor-belt-replacement"
-    ]
-    
-    for (const id of serviceIds) {
-      const checkbox = document.getElementById(id) as HTMLInputElement
-      if (checkbox?.checked) {
-        services.push({
-          serviceId: id,
-          serviceName: id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-          isOffered: true,
-          hatchbackPrice: parseFloat((document.getElementById(`${id}-hatchback`) as HTMLInputElement)?.value || "0"),
-          sedanPrice: parseFloat((document.getElementById(`${id}-sedan`) as HTMLInputElement)?.value || "0"),
-          suvPrice: parseFloat((document.getElementById(`${id}-suv`) as HTMLInputElement)?.value || "0"),
-          duration: parseInt((document.getElementById(`${id}-duration`) as HTMLInputElement)?.value || "0")
-        })
-      }
-    }
-    
-    return services
-  }
-
   const handleSubmit = async (e?: FormEvent) => {
     if (e) e.preventDefault()
     
@@ -229,9 +209,20 @@ export default function GarageRegistrationForm() {
       // Prepare the complete submission data
       const submissionData = {
         ...formData,
-        fluids: prepareFluidData(),
-        staffMembers: prepareStaffData(),
-        services: prepareServicesData()
+        fluids: fluids.map(fluid => ({
+          fluidType: fluid.fluidType || "",
+          brandName: fluid.brandName || "",
+          grade: fluid.grade || "",
+          ratePerLiter: fluid.ratePerLiter || 0,
+          usedFor: fluid.usedFor || ""
+        })),
+        staffMembers: staffMembers.map(staff => ({
+          name: staff.name || "",
+          phoneNumber: staff.phoneNumber || "",
+          specialist: staff.specialist || "",
+          photoLink: staff.photoLink || "",
+          notes: staff.notes || ""
+        }))
       }
       
       const response = await axios.post(`${API_BASE_URL}/garages`, submissionData)
@@ -310,7 +301,7 @@ export default function GarageRegistrationForm() {
 
       {/* Form Content - Only show if not completed */}
       {!isCompleted && (
-        <form onSubmit={handleSubmit}>egis
+        <form onSubmit={handleSubmit}>
           <div className="flex items-center justify-center mb-6">
             <div className="w-20 h-20 mr-4">
               <Image src="/images/logo.png" alt="MechHelp Logo" width={80} height={80} className="object-contain" />

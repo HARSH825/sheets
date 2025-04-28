@@ -202,9 +202,7 @@ export default function GarageRegistrationForm() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault() // Prevent default form submission behavior
     
-    // Only proceed if we're on the last step and explicitly submitting
-    if (currentStep !== steps.length - 1) return
-    
+    // No longer checking if we're on the last step - the Submit button is only visible on the last step anyway
     setIsSubmitting(true)
     setErrorMessage("")
     
@@ -244,6 +242,15 @@ export default function GarageRegistrationForm() {
       setErrorMessage("An error occurred while submitting the form. Please try again.")
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  // This function will be used for navigation button clicks - not form submission
+  const navigateSteps = (direction: 'next' | 'prev') => {
+    if (direction === 'next' && currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1)
+    } else if (direction === 'prev' && currentStep > 0) {
+      setCurrentStep(currentStep - 1)
     }
   }
 
@@ -304,7 +311,7 @@ export default function GarageRegistrationForm() {
 
       {/* Form Content - Only show if not completed */}
       {!isCompleted && (
-        <form onSubmit={handleSubmit} className="form-container">
+        <div className="form-container">
           <div className="flex items-center justify-center mb-6">
             <div className="w-20 h-20 mr-4">
               <Image src="/images/logo.png" alt="MechHelp Logo" width={80} height={80} className="object-contain" />
@@ -334,7 +341,7 @@ export default function GarageRegistrationForm() {
             <Button
               type="button"
               variant="outline"
-              onClick={handlePrevious}
+              onClick={() => navigateSteps('prev')}
               disabled={currentStep === 0}
               className="flex items-center border-primary text-primary"
             >
@@ -344,22 +351,24 @@ export default function GarageRegistrationForm() {
             {currentStep < steps.length - 1 ? (
               <Button 
                 type="button" 
-                onClick={handleNext} 
+                onClick={() => navigateSteps('next')} 
                 className="flex items-center brand-gradient text-white brand-shadow"
               >
                 Next <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             ) : (
-              <Button 
-                type="submit" 
-                disabled={isSubmitting} 
-                className="brand-gradient text-white brand-shadow flex items-center"
-              >
-                {isSubmitting ? "Submitting..." : "Submit"}
-              </Button>
+              <form onSubmit={handleSubmit} className="inline-block">
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting} 
+                  className="brand-gradient text-white brand-shadow flex items-center"
+                >
+                  {isSubmitting ? "Submitting..." : "Submit"}
+                </Button>
+              </form>
             )}
           </div>
-        </form>
+        </div>
       )}
     </div>
   )
